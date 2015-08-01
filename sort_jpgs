@@ -1,0 +1,112 @@
+#!/usr/bin/ruby
+
+require 'exifr'
+require 'fileutils'
+require 'date'
+
+source_path = "./"
+output_path = "./"
+
+# handle input arguments
+if ARGV.size != 0
+  index = ARGV.find_index '-h'
+  if index != nil
+    puts 'Usage: sort_jpgs [-s source_path] [-o output_path]'
+  end
+  
+  index = ARGV.find_index '-s'
+  if index != nil
+    source_argument = ARGV[index + 1]
+    if source_argument[0] == "/" # check if if source_argument start from root
+      source_path = source_argument
+    else
+      source_path += source_argument
+    end
+  end
+
+  index = ARGV.find_index '-o'
+  if index != nil
+    output_argument = ARGV[index + 1]
+    if output_argument[0] == "/" # check if if output_argument start from root
+      output_path = output_argument
+    else
+      output_path += output_argument
+    end
+  end
+
+  # paths have to end with "/"
+  if output_path[output_path.size - 1] != '/'
+    output_path += '/'
+  end
+
+  if source_path[source_path.size - 1] != '/'
+    source_path += '/'
+  end
+end
+
+if !Dir.exist?(output_path)
+  Dir.mkdir(output_path)
+end
+
+#Dir.mkdir(output_path + "NIKON D5100")
+#Dir.mkdir(output_path + "iPhone 5")
+Dir.chdir source_path
+
+log = open("sort_jpgs_#{Time.now.to_i}.log", 'w')
+log.puts("Log file for sort_jpgs from #{Time.now}")
+
+files = Dir.glob "./*/*.jpg"
+log.puts "#{files.count} files where found."
+
+statistics = { "NIKON D5100" => 0, "iPhone 5" => 0 , "Canon EOS 1100D" => 0,
+                  "DSC-W320" => 0, "Samsung L700" => 0 }
+
+moved = 0
+not_moved = 0
+files.each do |file|
+  begin
+    pic = EXIFR::JPEG.new(file)
+
+    year = pic.date_time.to_s[0,4] # e.g. "2013"
+    date = pic.date_time.to_s[0,10] # 2012-08-13
+    time = pic.date_time.to_i # in seconds (after 1970) for ordering
+    # > time will be the filename + ".jpg"
+
+    model = pic.model
+    if model == 'NIKON D5100' or model == 'iPhone 5' or model == 'Canon EOS 1100D' or model == 'Samsung L700' or model == 'DSC-W320'
+      target_path = "#{output_path}#{pic.model}/#{year}/#{date}/"
+
+      # create directories if nonexistant
+      if !Dir.exist?("#{output_path}#{pic.model}/#{year}")
+        Dir.mkdir("#{output_path}#{pic.model}/#{year}")
+        log.puts "Created directory <#{output_path}#{pic.model}/#{year}>"
+      end
+
+      if !Dir.exist?(target_path)
+        Dir.mkdir(target_path)
+        log.puts "Created directory <#{target_path}>"
+      end
+
+      # move file
+      FileUtils.move(file, target_path + "#{time}.jpg")
+      #FileUtils.copy(file, target_path + "#{time}.jpg")
+      #log.puts "#{file} > #{target_path}#{time}.jpg"
+      moved += 1
+
+      # do statistics'
+      statistics[model] += 1
+    else
+      log.puts "#{pic} is taken with an unrecognized model (#{model})"
+      not_moved += 1
+    end
+  rescue
+    log.puts "Exception was raised while handling #{file}. (probably an EXIFR::MalformedJPEG exception)"
+  end
+end
+
+# print and/or save statistics to log file
+log.puts "#{moved} files were moved. #{not_moved} were not moved."
+log.puts statistics
+puts statistics
+
+log.close
