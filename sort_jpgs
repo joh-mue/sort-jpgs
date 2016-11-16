@@ -60,45 +60,46 @@ def create_target_dir(pic, output)
   target_dir
 end
 
+# check if file already exists and create appropriate file_basename
+def create_file_basename(pic, target_dir)
+  existing_files = Dir.glob File.join(target_dir, "#{pic.date_time.to_i}*")
+  if existing_files > 0
+    increment_filename(existing_files)
+  else
+    "#{pic.date_time.to_i}"
+  end
+end
+
+def handle_file(move, file, target_dir, file_basename)
+  if move
+    FileUtils.move(file, File.join(target_dir, file_basename + ".jpg"))
+  else
+    FileUtils.copy(file, File.join(target_dir, file_basename + ".jpg"))
+  end
+  statistics[:moved_or_copied] += 1
+end
+
 opts = parse_options
-Dir.chdir source_path
-
-log = open("sort_jpgs_#{Time.now.to_i}.log", 'w')
-log.puts("Log file for sort_jpgs from #{Time.now}")
-
-files = Dir.glob "./*/*.jpg"
-log.puts "#{files.count} files where found."
-
 statistics = new Hash(0)
 
-files = 0
+files = Dir.glob File.join(source_path, "*/*.jpg")
+log = open("sort_jpgs_#{Time.now.to_i}.log", 'w')
+log.puts("Log file for sort_jpgs from #{Time.now}")
+log.puts "#{files.count} files where found."
+
 files.each do |file|
   begin
     pic = EXIFR::JPEG.new(file)
     statistics[pic.model] += 1
     target_dir = create_target_dir(pic, opts[:output])
-
-    # check if file already exists
-    file_basename = "#{pic.date_time.to_i}"
-    existing_files = Dir.glob("#{target_path}/{file_basename}*")
-    if existing_files > 0
-      file_basename = increment(existing_files)
-    end
-
-    # move file
-    if opts[:move]
-      FileUtils.move(file, File.join(target_dir, file_basename + ".jpg"))
-    else
-      FileUtils.copy(file, File.join(target_dir, file_basename + ".jpg"))
-    end
-    files += 1
+    create_file_basename(pic, target_dir)
+    handle_file(opts[:move], file, target_dir, file_basename)
   rescue
     log.puts "Exception was raised while handling #{file}. (probably an EXIFR::MalformedJPEG exception)"
   end
 end
 
 # print and/or save statistics to log file
-log.puts "#{files} files were moved/copyed."
+log.puts "#{statistics[:moved_or_copied]} files were moved/copied."
 log.puts statistics
 log.close
-puts statistics
