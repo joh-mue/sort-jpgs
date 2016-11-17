@@ -4,6 +4,9 @@ require 'exifr'
 require 'fileutils'
 require 'date'
 require 'optparse'
+require 'logger'
+
+$LOG = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
 
 def parse_options
   opts = { source: './', output: './', move: false }
@@ -79,27 +82,27 @@ def handle_file(move, file, target_dir, file_basename)
   statistics[:moved_or_copied] += 1
 end
 
-opts = parse_options
-statistics = new Hash(0)
+if __FILE__ == $PROGRAM_NAME
+  opts = parse_options
+  statistics = new Hash(0)
 
-files = Dir.glob File.join(source_path, "*/*.jpg")
-log = open("sort_jpgs_#{Time.now.to_i}.log", 'w')
-log.puts("Log file for sort_jpgs from #{Time.now}")
-log.puts "#{files.count} files where found."
+  files = Dir.glob File.join(source_path, "*/*.jpg")
 
-files.each do |file|
-  begin
-    pic = EXIFR::JPEG.new(file)
-    statistics[pic.model] += 1
-    target_dir = create_target_dir(pic, opts[:output])
-    create_file_basename(pic, target_dir)
-    handle_file(opts[:move], file, target_dir, file_basename)
-  rescue
-    log.puts "Exception was raised while handling #{file}. (probably an EXIFR::MalformedJPEG exception)"
+  $LOG.info(Time.now.to_s[0,19])  { "Log file for sort_jpgs from #{Time.now}" }
+  $LOG.info(Time.now.to_s[0,19])  { "#{files.count} files where found." }
+
+  files.each do |file|
+    begin
+      pic = EXIFR::JPEG.new(file)
+      statistics[pic.model] += 1
+      target_dir = create_target_dir(pic, opts[:output])
+      create_file_basename(pic, target_dir)
+      handle_file(opts[:move], file, target_dir, file_basename)
+    rescue
+      $LOG.error "Exception was raised while handling #{file}. (probably an EXIFR::MalformedJPEG exception)"
+    end
   end
-end
 
-# print and/or save statistics to log file
-log.puts "#{statistics[:moved_or_copied]} files were moved/copied."
-log.puts statistics
-log.close
+  $LOG.info(Time.now.to_s[0,19])  { "#{statistics[:moved_or_copied]} files were moved/copied." }
+  $LOG.info(Time.now.to_s[0,19])  { statistics }
+end
