@@ -7,6 +7,7 @@ require 'optparse'
 require 'logger'
 
 $LOG = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
+FORMAT = "%y-%m-%d %H:%M:%S"
 
 def parse_options
   opts = { source: './', output: './', move: false }
@@ -38,15 +39,16 @@ def parse_options
       puts parser
       exit
     end
-
-    opts
+  end
+  optparse.parse!
+  opts
 end
 
 def increment_filename(existing_files)
   if existing_files.size == 10 # -> file-9.jpg
     filename = "#{pic.date_time.to_i}-10.jpg" # .succ ignores the '-'
   elsif existing_files.size == 1
-    filename = "#{pic.date_time.to_i}-1.jpg")
+    filename = "#{pic.date_time.to_i}-1.jpg"
   elsif existing_files.size > 1
     filenames = existing_files.map { |file| File.basename(file) }
     filename = filenames.sort.last.succ # increment the -x.jpg count
@@ -88,8 +90,8 @@ if __FILE__ == $PROGRAM_NAME
 
   files = Dir.glob File.join(source_path, "*/*.jpg")
 
-  $LOG.info(Time.now.to_s[0,19])  { "Log file for sort_jpgs from #{Time.now}" }
-  $LOG.info(Time.now.to_s[0,19])  { "#{files.count} files where found." }
+  $LOG.info(Time.now.strftime(FORMAT))  { "Log file for sort_jpgs from #{Time.now}" }
+  $LOG.info(Time.now.strftime(FORMAT))  { "#{files.count} files where found." }
 
   files.each do |file|
     begin
@@ -103,6 +105,6 @@ if __FILE__ == $PROGRAM_NAME
     end
   end
 
-  $LOG.info(Time.now.to_s[0,19])  { "#{statistics[:moved_or_copied]} files were moved/copied." }
-  $LOG.info(Time.now.to_s[0,19])  { statistics }
+  $LOG.info(Time.now.strftime(FORMAT))  { "#{statistics[:moved_or_copied]} files were moved/copied." }
+  $LOG.info(Time.now.strftime(FORMAT))  { statistics }
 end
