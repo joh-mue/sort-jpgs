@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Sorts jpgs, moves and renames them}
   spec.description   = %q{Loads all files from a directory and it's subdirectories and moves and organizes them.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.homepage      = "http://github.com/joh-mue/sort-jpgs.rb"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'

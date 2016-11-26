@@ -6,7 +6,6 @@ require 'date'
 require 'optparse'
 require 'logger'
 
-$LOG = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
 FORMAT = "%y-%m-%d %H:%M:%S"
 
 def parse_options
@@ -44,15 +43,18 @@ def parse_options
   opts
 end
 
-def increment_filename(existing_files)
-  if existing_files.size == 10 # -> file-9.jpg
-    filename = "#{pic.date_time.to_i}-10.jpg" # .succ ignores the '-'
-  elsif existing_files.size == 1
-    filename = "#{pic.date_time.to_i}-1.jpg"
-  elsif existing_files.size > 1
-    filenames = existing_files.map { |file| File.basename(file) }
-    filename = filenames.sort.last.succ # increment the -x.jpg count
+def increment_filebasename(existing_files)
+  base = File.basename(existing_files.first, '.jpg').split('-').first
+  count = 1
+  if existing_files.size > 1
+    count = existing_files.map { |file| File.basename(file, '.jpg') }
+      .select { |name| name.include? '-' }
+      .map { |name| name.split('-').last.to_i }
+      .sort
+      .last
+      .succ
   end
+  "#{base}-#{count}.jpg"
 end
 
 # create directories if nonexistant
@@ -69,7 +71,7 @@ end
 def create_file_basename(pic, target_dir)
   existing_files = Dir.glob File.join(target_dir, "#{pic.date_time.to_i}*")
   if existing_files > 0
-    increment_filename(existing_files)
+    increment_filebasename(existing_files, file_basename)
   else
     "#{pic.date_time.to_i}"
   end
@@ -85,6 +87,8 @@ def handle_file(move, file, target_dir, file_basename)
 end
 
 if __FILE__ == $PROGRAM_NAME
+  $LOG = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
+  
   opts = parse_options
   statistics = new Hash(0)
 
