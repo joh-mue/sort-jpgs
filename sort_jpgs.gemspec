@@ -37,4 +37,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rubocop'
 
   spec.add_dependency 'exifr', '~> 1.2.5'
+  spec.add_dependency 'schlib'
 end

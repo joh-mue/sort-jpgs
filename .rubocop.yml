@@ -22,18 +22,14 @@ Metrics/BlockLength:
 # Configuration parameters: AllowHeredoc, AllowURI, URISchemes, IgnoreCopDirectives, IgnoredPatterns.
 # URISchemes: http, https
 Metrics/LineLength:
-  Max: 122
+  Max: 100
+  Exclude:
+    - 'sort_jpgs.gemspec'
 
 # Offense count: 2
 # Configuration parameters: CountComments.
 Metrics/MethodLength:
-  Max: 23
-
-# Offense count: 5
-# Configuration parameters: AllowedVariables.
-Style/GlobalVars:
-  Exclude:
-    - 'lib/sort_jpgs.rb'
+  Max: 15
 
 # Offense count: 1
 # Cop supports --auto-correct.

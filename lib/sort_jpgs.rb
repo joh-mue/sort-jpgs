@@ -6,23 +6,25 @@ require 'fileutils'
 require 'date'
 require 'optparse'
 require 'logger'
+require 'schlib/spinner'
 
 FORMAT = '%y-%m-%d %H:%M:%S'
 
+# rubocop:disable Metrics/MethodLength
 def parse_options
   opts = { source: './', output: './', move: false }
 
   optparse = OptionParser.new do |parser|
-    # banner that is displayed at the top
-    parser.banner = "Usage: \b
-    sort_jpgs [-h] [-s SOURCE_PATH] -o OUTPUT_PATH\n\n"
+    parser.banner = "Usage: \bsort_jpgs [-h] [-s SOURCE_PATH] -o OUTPUT_PATH\n\n"
 
     ### options and what they do
-    parser.on('-s', '--source-path DIR', 'Set the directory that contains files to be sorted. Default is PWD') do |source|
+    parser.on('-s', '--source-path DIR',
+              'Set the directory that contains files to be sorted. Default is PWD') do |source|
       opts[:source] = source
     end
 
-    parser.on('-o', '--output-path DIR', 'Set the directory that the files will be written to.') do |output|
+    parser.on('-o', '--output-path DIR',
+              'Set the directory that the files will be written to.') do |output|
       opts[:output] = output
     end
 
@@ -30,7 +32,8 @@ def parse_options
       opts[:move] = true
     end
 
-    parser.on('-t', '--threshold VALUE', Integer, 'Set the minimum size that a picture has to be in kB.') do |threshold|
+    parser.on('-t', '--threshold VALUE', Integer,
+              'Set the minimum size that a picture has to be in kB.') do |threshold|
       opts[:threshold] = threshold.to_i * 1000
     end
 
@@ -40,9 +43,11 @@ def parse_options
       exit
     end
   end
+
   optparse.parse!
   opts
 end
+# rubocop:enable Metrics/MethodLength
 
 def increment_filename(existing_files)
   base = File.basename(existing_files.first, '.jpg').split('-').first
@@ -87,26 +92,32 @@ def handle_file(move, file, target_dir, file_basename)
   statistics[:moved_or_copied] += 1
 end
 
+def time
+  Time.now.strftime(FORMAT)
+end
+
 if __FILE__ == $PROGRAM_NAME
-  $LOG = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
+  Log = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
   opts = parse_options
   statistics = new Hash(0)
 
   files = Dir.glob File.join(source_path, '*/*.jpg')
-  $LOG.info(Time.now.strftime(FORMAT)) { "Log file for sort_jpgs from #{Time.now} \n #{files.count} files where found." }
+  Log.info(time) { "Log file for sort_jpgs from #{Time.now} \n #{files.count} files where found." }
 
-  files.select { |file| File.size(file) >= opts[:threshold] }.each do |file|
-    begin
-      pic = EXIFR::JPEG.new(file)
-      statistics[pic.model] += 1
-      target_dir = create_target_dir(pic, opts[:output])
-      create_file_basename(pic, target_dir)
-      handle_file(opts[:move], file, target_dir, file_basename)
-    rescue
-      $LOG.error "Exception was raised while handling #{file}. (probably an EXIFR::MalformedJPEG exception)"
+  Schlib::Spinner.wait_for do
+    files.select { |file| File.size(file) >= opts[:threshold] }.each do |file|
+      begin
+        pic = EXIFR::JPEG.new(file)
+        statistics[pic.model] += 1
+        target_dir = create_target_dir(pic, opts[:output])
+        create_file_basename(pic, target_dir)
+        handle_file(opts[:move], file, target_dir, file_basename)
+      rescue EXIFR::MalformedJPEG => e
+        Log.error { "EXIFR::MalformedJPEG exception was raised while handling #{file}.\n#{e}" }
+      end
     end
   end
 
-  $LOG.info(Time.now.strftime(FORMAT)) { "#{statistics[:moved_or_copied]} files were moved/copied." }
-  $LOG.info(Time.now.strftime(FORMAT)) { statistics }
+  Log.info(time) { "#{statistics[:moved_or_copied]} files were moved/copied." }
+  Log.info(time) { statistics }
 end
