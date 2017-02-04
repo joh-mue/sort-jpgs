@@ -1,4 +1,5 @@
 #!/usr/bin/ruby
+# frozen_string_literal: true
 
 require 'exifr'
 require 'fileutils'
@@ -48,11 +49,11 @@ def increment_filename(existing_files)
   count = 1
   if existing_files.size > 1
     count = existing_files.map { |file| File.basename(file, '.jpg') }
-      .select { |name| name.include? '-' }
-      .map { |name| name.split('-').last.to_i }
-      .sort
-      .last
-      .succ
+                          .select { |name| name.include? '-' }
+                          .map { |name| name.split('-').last.to_i }
+                          .sort
+                          .last
+                          .succ
   end
   "#{base}-#{count}.jpg"
 end
@@ -73,7 +74,7 @@ def create_file_basename(pic, target_dir)
   if existing_files > 0
     increment_filename(existing_files)
   else
-    "#{pic.date_time.to_i}"
+    pic.date_time.to_i.to_s
   end
 end
 
