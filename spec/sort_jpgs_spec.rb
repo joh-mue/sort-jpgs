@@ -48,11 +48,25 @@ describe SortJpgs do
   end
 
   describe '#create_target_dir' do
-    it "creates the target_dir for standard output './'"
+    test_dir = 'spec/tests/'
+    before(:each) do
+      FileUtils.makedirs test_dir
+      puts 'before each ran'
+    end
 
-    it 'creates the target_dir for non-standard output'
+    it 'creates the target_dir' do
+      test_output = File.join(test_dir, '/output')
+      dummy_pic = EXIFR::JPEG.new('spec/dummy.jpg')
+      target_dir = create_target_dir(dummy_pic, test_output)
+      expect(target_dir).to eq(File.join(test_output, 'iPhone 5', '2013', '03', '21'))
+    end
 
-    it 'detects existing target_dir'
+    it 'does not override existing target_dir'
+
+    after(:each) do
+      FileUtils.remove_entry_secure(test_dir)
+      puts 'after each ran'
+    end
   end
 
   describe '#create_file_basename' do

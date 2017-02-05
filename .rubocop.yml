@@ -16,7 +16,10 @@ Metrics/AbcSize:
 # Offense count: 1
 # Configuration parameters: CountComments, ExcludedMethods.
 Metrics/BlockLength:
-  Max: 51
+  Max: 25
+  Exclude:
+    - 'spec/sort_jpgs_spec.rb'
+    - 'sort_jpgs.gemspec'
 
 # Offense count: 9
 # Configuration parameters: AllowHeredoc, AllowURI, URISchemes, IgnoreCopDirectives, IgnoredPatterns.

@@ -66,10 +66,10 @@ end
 # create directories if nonexistant
 def create_target_dir(pic, output)
   year = pic.date_time.to_s[0, 4] # e.g. "2013"
-  month = pic.date_time.to_s[5, 2]
+  month = pic.date_time.to_s[5, 2] # 08
   day = pic.date_time.to_s[8, 2] # 2012-08-13
   target_dir = File.join(output, pic.model, year, month, day)
-  FileUtils.mkdirs target_dir unless Dir.exist?(target_dir)
+  FileUtils.makedirs target_dir unless Dir.exist?(target_dir)
   target_dir
 end
 
