@@ -2,21 +2,6 @@
 require 'spec_helper'
 
 describe SortJpgs do
-  describe 'fun stuff' do
-    it 'has a version number' do
-      expect(SortJpgs::VERSION).not_to be nil
-    end
-
-    it 'can call methods' do
-      increment_filename(['a'])
-      expect(true).to eq(true)
-    end
-
-    it 'does something useful' do
-      expect(true).to eq(true)
-    end
-  end
-
   describe '#increment_filename' do
     it 'adds -1 if file exists' do
       files = ['/folder/12439870.jpg']
@@ -51,27 +36,60 @@ describe SortJpgs do
     test_dir = 'spec/tests/'
     before(:each) do
       FileUtils.makedirs test_dir
-      puts 'before each ran'
     end
 
     it 'creates the target_dir' do
-      test_output = File.join(test_dir, '/output')
       dummy_pic = EXIFR::JPEG.new('spec/dummy.jpg')
+      test_output = File.join(test_dir, '/output')
       target_dir = create_target_dir(dummy_pic, test_output)
       expect(target_dir).to eq(File.join(test_output, 'iPhone 5', '2013', '03', '21'))
     end
 
-    it 'does not override existing target_dir'
+    it 'does not override existing target_dir' do
+      dummy_pic = EXIFR::JPEG.new('spec/dummy.jpg')
+      test_output = File.join(test_dir, '/output')
+      target_dir = create_target_dir(dummy_pic, test_output)
+      creation_time = File.ctime(target_dir)
+      target_dir = create_target_dir(dummy_pic, test_output)
+      expect(File.ctime(target_dir)).to eq(creation_time)
+    end
 
     after(:each) do
       FileUtils.remove_entry_secure(test_dir)
-      puts 'after each ran'
     end
   end
 
-  describe '#create_file_basename' do
-    it "creates basename if it's the first of its kind"
+  describe '#create_filename and #handle_file' do
+    test_dir = 'spec/tests/'
+    dummy_pic = EXIFR::JPEG.new('spec/dummy.jpg')
 
-    it "creates basename if it's not the first of its kind"
+    before(:each) do
+      FileUtils.makedirs test_dir
+    end
+
+    it "creates basename if it's the first of its kind" do
+      target_dir = create_target_dir(dummy_pic, File.join(test_dir, '/output'))
+
+      filename = create_filename(dummy_pic, target_dir)
+      expect(filename).to eq(dummy_pic.date_time.to_i.to_s + '.jpg')
+    end
+
+    it 'handles multiple copies without overriding one' do
+      target_dir = create_target_dir(dummy_pic, File.join(test_dir, '/output'))
+
+      filename = create_filename(dummy_pic, target_dir)
+      handle_file(false, File.new('spec/dummy.jpg'), target_dir, filename)
+
+      filename = create_filename(dummy_pic, target_dir)
+      expect(filename).to eq(dummy_pic.date_time.to_i.to_s + '-1.jpg')
+
+      handle_file(false, File.new('spec/dummy.jpg'), target_dir, filename)
+      files = Dir.glob File.join(target_dir, "#{dummy_pic.date_time.to_i}*")
+      expect(files.size).to eq(2)
+    end
+
+    after(:each) do
+      FileUtils.remove_entry_secure(test_dir)
+    end
   end
 end

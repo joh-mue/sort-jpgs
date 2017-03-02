@@ -10,6 +10,83 @@ require 'schlib/spinner'
 
 FORMAT = '%y-%m-%d %H:%M:%S'
 
+if __FILE__ == $PROGRAM_NAME
+  Log = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
+  opts = parse_options
+  stats = new Hash(0)
+
+  files = Dir.glob File.join(source_path, '*/*.jpg')
+  Log.info(time) { "Log file for sort_jpgs from #{Time.now} \n #{files.count} files where found." }
+
+  Schlib::Spinner.wait_for do
+    files.select { |file| File.size(file) >= opts[:threshold] }.each do |file|
+      begin
+        pic = EXIFR::JPEG.new(file)
+        target_dir = create_target_dir(pic, opts[:output])
+        filename = create_filename(pic, target_dir)
+        handle_file(opts[:move], file, target_dir, filename)
+        update_statistics(stats, pic.model)
+      rescue EXIFR::MalformedJPEG => e
+        Log.error { "EXIFR::MalformedJPEG exception was raised while handling #{file}.\n#{e}" }
+      end
+    end
+  end
+
+  Log.info(time) { "#{stats[:moved_or_copied]} files were moved/copied." }
+  Log.info(time) { stats }
+end
+
+def time
+  Time.now.strftime(FORMAT)
+end
+
+# create directories if nonexistant
+def create_target_dir(pic, output)
+  year = pic.date_time.to_s[0, 4] # e.g. "2013"
+  month = pic.date_time.to_s[5, 2] # 08
+  day = pic.date_time.to_s[8, 2] # 2012-08-13
+  target_dir = File.join(output, pic.model, year, month, day)
+  FileUtils.makedirs target_dir unless Dir.exist?(target_dir)
+  target_dir
+end
+
+# check if file already exists and create appropriate filename
+def create_filename(pic, target_dir)
+  existing_files = Dir.glob File.join(target_dir, "#{pic.date_time.to_i}*")
+  if existing_files.empty?
+    pic.date_time.to_i.to_s + '.jpg'
+  else
+    increment_filename(existing_files)
+  end
+end
+
+def increment_filename(existing_files)
+  base = File.basename(existing_files.first, '.jpg').split('-').first
+  count = 1
+  if existing_files.size > 1
+    count = existing_files.map { |file| File.basename(file, '.jpg') }
+                          .select { |name| name.include? '-' }
+                          .map { |name| name.split('-').last.to_i }
+                          .sort
+                          .last
+                          .succ
+  end
+  "#{base}-#{count}.jpg"
+end
+
+def handle_file(move, file, target_dir, filename)
+  if move
+    FileUtils.move(file, File.join(target_dir, filename))
+  else
+    FileUtils.copy(file, File.join(target_dir, filename))
+  end
+end
+
+def update_statistics(statistics, camera_model)
+  statistics[camera_model] += 1
+  statistics[:moved_or_copied] += 1
+end
+
 # rubocop:disable Metrics/MethodLength
 def parse_options
   opts = { source: './', output: './', move: false }
@@ -48,76 +125,3 @@ def parse_options
   opts
 end
 # rubocop:enable Metrics/MethodLength
-
-def increment_filename(existing_files)
-  base = File.basename(existing_files.first, '.jpg').split('-').first
-  count = 1
-  if existing_files.size > 1
-    count = existing_files.map { |file| File.basename(file, '.jpg') }
-                          .select { |name| name.include? '-' }
-                          .map { |name| name.split('-').last.to_i }
-                          .sort
-                          .last
-                          .succ
-  end
-  "#{base}-#{count}.jpg"
-end
-
-# create directories if nonexistant
-def create_target_dir(pic, output)
-  year = pic.date_time.to_s[0, 4] # e.g. "2013"
-  month = pic.date_time.to_s[5, 2] # 08
-  day = pic.date_time.to_s[8, 2] # 2012-08-13
-  target_dir = File.join(output, pic.model, year, month, day)
-  FileUtils.makedirs target_dir unless Dir.exist?(target_dir)
-  target_dir
-end
-
-# check if file already exists and create appropriate file_basename
-def create_file_basename(pic, target_dir)
-  existing_files = Dir.glob File.join(target_dir, "#{pic.date_time.to_i}*")
-  if existing_files > 0
-    increment_filename(existing_files)
-  else
-    pic.date_time.to_i.to_s
-  end
-end
-
-def handle_file(move, file, target_dir, file_basename)
-  if move
-    FileUtils.move(file, File.join(target_dir, file_basename + '.jpg'))
-  else
-    FileUtils.copy(file, File.join(target_dir, file_basename + '.jpg'))
-  end
-  statistics[:moved_or_copied] += 1
-end
-
-def time
-  Time.now.strftime(FORMAT)
-end
-
-if __FILE__ == $PROGRAM_NAME
-  Log = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
-  opts = parse_options
-  statistics = new Hash(0)
-
-  files = Dir.glob File.join(source_path, '*/*.jpg')
-  Log.info(time) { "Log file for sort_jpgs from #{Time.now} \n #{files.count} files where found." }
-
-  Schlib::Spinner.wait_for do
-    files.select { |file| File.size(file) >= opts[:threshold] }.each do |file|
-      begin
-        pic = EXIFR::JPEG.new(file)
-        statistics[pic.model] += 1
-        target_dir = create_target_dir(pic, opts[:output])
-        create_file_basename(pic, target_dir)
-        handle_file(opts[:move], file, target_dir, file_basename)
-      rescue EXIFR::MalformedJPEG => e
-        Log.error { "EXIFR::MalformedJPEG exception was raised while handling #{file}.\n#{e}" }
-      end
-    end
-  end
-
-  Log.info(time) { "#{statistics[:moved_or_copied]} files were moved/copied." }
-  Log.info(time) { statistics }
-end

@@ -42,3 +42,4 @@ Style/NumericPredicate:
   Exclude:
     - 'spec/**/*'
     - 'lib/sort_jpgs.rb'
+
