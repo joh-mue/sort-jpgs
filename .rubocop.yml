@@ -32,7 +32,7 @@ Metrics/LineLength:
 # Offense count: 2
 # Configuration parameters: CountComments.
 Metrics/MethodLength:
-  Max: 15
+  Max: 20
 
 # Offense count: 1
 # Cop supports --auto-correct.
@@ -43,3 +43,6 @@ Style/NumericPredicate:
     - 'spec/**/*'
     - 'lib/sort_jpgs.rb'
 
+Debugger:
+  Exclude:
+    - 'lib/sort_jpgs.rb'

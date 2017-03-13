@@ -1,4 +1,53 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-abort 'this needs to be written first'
+$LOAD_PATH.unshift(File.dirname(File.realpath(__FILE__)) + '/../lib')
+
+require 'optparse'
+require 'sort_jpgs'
+
+# abort 'this needs to be written first'
+
+# rubocop:disable Metrics/MethodLength
+def parse_options
+  opts = { source: './', output: './output', move: false }
+
+  optparse = OptionParser.new do |parser|
+    parser.banner = "Usage: \bsort_jpgs [-h] [-s SOURCE_PATH] -o OUTPUT_PATH\n\n"
+
+    ### options and what they do
+    parser.on('-s', '--source-path DIR',
+              'Set the directory that contains files to be sorted. Default is PWD') do |source|
+      opts[:source] = source
+    end
+
+    parser.on('-o', '--output-path DIR',
+              'Set the directory that the files will be written to.') do |output|
+      opts[:output] = output
+    end
+
+    parser.on('-m', '--move', 'Move files instead of copying them.') do
+      opts[:move] = true
+    end
+
+    parser.on('-t', '--threshold VALUE', Integer,
+              'Set the minimum size that a picture has to be in kB.') do |threshold|
+      opts[:threshold] = threshold.to_i * 1000
+    end
+
+    # This displays the help screen
+    parser.on_tail('-h', '--help', 'Display this screen.') do
+      puts parser
+      exit
+    end
+  end
+
+  optparse.parse!
+  opts
+end
+# rubocop:enable Metrics/MethodLength
+
+opts = parse_options
+
+sort_jpeg = SortJPGS::Sorter.new(opts)
+sort_jpeg.run
