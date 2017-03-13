@@ -21,7 +21,7 @@ module SortJPGS
       log = Logger.new("sort_jpgs_#{Time.now.to_i}.log", datetime_format: '%y-%m-%d %H:%M:%S ')
       stats = Hash.new(0)
 
-      files = Dir.glob File.join(@source, '*/*.jpg')
+      files = Dir.glob(File.join(@source, '*/*.jpg'), File::FNM_CASEFOLD)
       log.info { "#{files.count} files where found." }
 
       Schlib::Spinner.wait_for do
