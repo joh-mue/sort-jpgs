@@ -7,8 +7,6 @@ require 'logger'
 require 'schlib/spinner'
 
 module SortJPGS
-  FORMAT = '%y-%m-%d %H:%M:%S'
-
   # This is where all the magic happens
   class Sorter
     def initialize(opts)
@@ -20,11 +18,11 @@ module SortJPGS
 
     # rubocop:disable Metrics/AbcSize
     def run
-      log = Logger.new("sort_jpgs_#{Time.now.to_i}.log")
+      log = Logger.new("sort_jpgs_#{Time.now.to_i}.log", datetime_format: '%y-%m-%d %H:%M:%S ')
       stats = Hash.new(0)
 
       files = Dir.glob File.join(@source, '*/*.jpg')
-      log.info(time) { "SortJPGS log from #{Time.now} \n #{files.count} files where found." }
+      log.info { "#{files.count} files where found." }
 
       Schlib::Spinner.wait_for do
         files.select { |file| File.size(file) >= @threshold }.each do |file|
@@ -40,14 +38,11 @@ module SortJPGS
         end
       end
 
-      log.info(time) { "#{stats[:moved_or_copied]} files were moved/copied." }
-      log.info(time) { stats }
+      puts "#{stats[:moved_or_copied]} files were moved/copied."
+      log.info { "#{stats[:moved_or_copied]} files were moved/copied." }
+      log.info { stats }
     end
     # rubocop:enable Metrcis/AbcSize
-
-    def time
-      Time.now.strftime(FORMAT)
-    end
 
     # create directories if nonexistant
     def create_target_dir(pic)

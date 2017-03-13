@@ -10,10 +10,10 @@ require 'sort_jpgs'
 
 # rubocop:disable Metrics/MethodLength
 def parse_options
-  opts = { source: './', output: './output', move: false }
+  opts = { source: './', output: './output', move: false, threshold: 0 }
 
   optparse = OptionParser.new do |parser|
-    parser.banner = "Usage: \bsort_jpgs [-h] [-s SOURCE_PATH] -o OUTPUT_PATH\n\n"
+    parser.banner = "Usage: \bsort_jpgs [-mh] [-t THRESHOLD] [-s SOURCE_PATH] -o OUTPUT_PATH\n\n"
 
     ### options and what they do
     parser.on('-s', '--source-path DIR',
@@ -49,5 +49,5 @@ end
 
 opts = parse_options
 
-sort_jpeg = SortJPGS::Sorter.new(opts)
-sort_jpeg.run
+sorter = SortJPGS::Sorter.new(opts)
+sorter.run

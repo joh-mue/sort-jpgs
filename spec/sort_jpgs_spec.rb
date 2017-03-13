@@ -3,10 +3,10 @@ require 'spec_helper'
 
 describe SortJpgs do
   describe 'tests' do
-    it 'can access methods' do
+    it 'can create a sorter' do
       opts = { source: './', output: './output', move: false }
       sorter = SortJPGS::Sorter.new(opts)
-      puts sorter.time
+      expect(sorter.nil?).to eq(false)
     end
   end
 
