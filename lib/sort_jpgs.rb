@@ -14,14 +14,15 @@ module SortJPGS
       @output = opts[:output]
       @move = opts[:move]
       @threshold = opts[:threshold]
+
+      logfile = File.join(@source, "sort_#{Time.now.to_i}.log")
+      @log = Logger.new(logfile, datetime_format: '%y-%m-%d %H:%M:%S ')
+      @stats = Hash.new(0)
     end
 
     # rubocop:disable Metrics/AbcSize
     def run
-      log = Logger.new("sort_jpgs_#{Time.now.to_i}.log", datetime_format: '%y-%m-%d %H:%M:%S ')
-      stats = Hash.new(0)
-
-      files = Dir.glob(File.join(@source, '*/*.jpg'), File::FNM_CASEFOLD)
+      files = Dir.glob(File.join(@source, '**/*.jpg'), File::FNM_CASEFOLD)
       log.info { "#{files.count} files where found." }
 
       Schlib::Spinner.wait_for do
@@ -31,16 +32,16 @@ module SortJPGS
             target_dir = create_target_dir(pic)
             filename = create_filename(pic, target_dir)
             handle_file(file, target_dir, filename)
-            update_statistics(stats, pic.model)
+            update_statistics(@stats, pic.model)
           rescue EXIFR::MalformedJPEG => e
             log.error { "EXIFR::MalformedJPEG exception was raised while handling #{file}.\n#{e}" }
           end
         end
       end
 
-      puts "#{stats[:moved_or_copied]} files were moved/copied."
-      log.info { "#{stats[:moved_or_copied]} files were moved/copied." }
-      log.info { stats }
+      puts "#{@stats[:moved_or_copied]} files were moved/copied."
+      log.info { "#{@stats[:moved_or_copied]} files were moved/copied." }
+      log.info { @stats }
     end
     # rubocop:enable Metrcis/AbcSize
 
@@ -52,6 +53,8 @@ module SortJPGS
       target_dir = File.join(@output, pic.model, year, month, day)
       FileUtils.makedirs target_dir unless Dir.exist?(target_dir)
       target_dir
+    rescue TypeError
+      raise EXIFR::MalformedJPEG, 'Date or camera_model not set in exif.'
     end
 
     # check if file already exists and create appropriate filename

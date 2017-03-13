@@ -19,6 +19,7 @@ def parse_options
     parser.on('-s', '--source-path DIR',
               'Set the directory that contains files to be sorted. Default is PWD') do |source|
       opts[:source] = source
+      opts[:output] = File.join(source, '/output')
     end
 
     parser.on('-o', '--output-path DIR',
