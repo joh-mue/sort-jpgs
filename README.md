@@ -1,8 +1,6 @@
 # SortJpgs ![build status](https://travis-ci.org/joh-mue/sort_jpgs.rb.svg?branch=master)
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/sort_jpgs`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+This is a little gem to sort through unnamed and unsorted jpgs and organize them.
 
 ## Installation
 
@@ -22,7 +20,15 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```
+Usage:sort_jpgs [-mh] [-t THRESHOLD] [-s SOURCE_PATH] -o OUTPUT_PATH
+
+  -s, --source-path DIR            Set the directory that contains files to be sorted. Default is PWD
+  -o, --output-path DIR            Set the directory that the files will be written to.
+  -m, --move                       Move files instead of copying them.
+  -t, --threshold VALUE            Set the minimum size that a picture has to be in kB.
+  -h, --help                       Display this screen.
+```
 
 ## Development
 
