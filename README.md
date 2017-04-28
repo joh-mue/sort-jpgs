@@ -1,4 +1,4 @@
-# SortJpgs ![build status](https://travis-ci.org/joh-mue/sort_jpgs.rb.svg?branch=master)
+# SortJpgs ![build status](https://api.travis-ci.org/joh-mue/sort-jpgs.svg?branch=master)
 
 This is a little gem to sort through unnamed and unsorted jpgs and organize them.
 

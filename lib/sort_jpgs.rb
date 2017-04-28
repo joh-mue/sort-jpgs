@@ -23,7 +23,7 @@ module SortJPGS
     # rubocop:disable Metrics/AbcSize
     def run
       files = Dir.glob(File.join(@source, '**/*.jpg'), File::FNM_CASEFOLD)
-      log.info { "#{files.count} files where found." }
+      @log.info { "#{files.count} files where found." }
 
       Schlib::Spinner.wait_for do
         files.select { |file| File.size(file) >= @threshold }.each do |file|
@@ -34,14 +34,14 @@ module SortJPGS
             handle_file(file, target_dir, filename)
             update_statistics(@stats, pic.model)
           rescue EXIFR::MalformedJPEG => e
-            log.error { "EXIFR::MalformedJPEG exception was raised while handling #{file}.\n#{e}" }
+            @log.error { "EXIFR::MalformedJPEG exception was raised while handling #{file}.\n#{e}" }
           end
         end
       end
 
       puts "#{@stats[:moved_or_copied]} files were moved/copied."
-      log.info { "#{@stats[:moved_or_copied]} files were moved/copied." }
-      log.info { @stats }
+      @log.info { "#{@stats[:moved_or_copied]} files were moved/copied." }
+      @log.info { @stats }
     end
     # rubocop:enable Metrcis/AbcSize
 
